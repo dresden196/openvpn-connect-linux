@@ -406,6 +406,19 @@ console.log(`[OpenVPN Connect Linux] Platform: ${process.platform} (${process.ar
 console.log(`[OpenVPN Connect Linux] Has single instance lock: ${app.hasSingleInstanceLock()}`);
 console.log(`[OpenVPN Connect Linux] --relaunch flag: ${app.commandLine.hasSwitch('relaunch')}`);
 
+// Kill openvpn on app exit (Ctrl+C, window close, etc.)
+function killOpenvpn() {
+  try {
+    const { execSync } = require('child_process');
+    execSync('pkill -f "openvpn --config /tmp/openvpn-connect-linux" 2>/dev/null', { timeout: 3000, stdio: 'ignore' });
+    console.log('[Linux] Killed openvpn on exit');
+  } catch {}
+}
+process.on('exit', killOpenvpn);
+process.on('SIGINT', () => { killOpenvpn(); process.exit(0); });
+process.on('SIGTERM', () => { killOpenvpn(); process.exit(0); });
+app.on('will-quit', killOpenvpn);
+
 // Set the working directory to the app dir so __dirname resolves correctly
 // for the webpack bundle's asset references
 process.chdir(APP_DIR);

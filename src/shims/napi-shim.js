@@ -958,13 +958,28 @@ class ClientWrapper {
   }
 
   disconnectAndDestroyClient() {
+    console.log('[napi-shim] disconnectAndDestroyClient() called');
     this.stop();
-    this.client_destroy();
+    // Delay destroy to let stop() complete its kill chain
+    setTimeout(() => {
+      this._destroyed = true;
+      this._cleanup();
+    }, 5000);
   }
 
   client_destroy() {
-    this._destroyed = true;
-    this._cleanup();
+    console.log('[napi-shim] client_destroy() called');
+    // If still connected, stop first
+    if (this._connected || this._process) {
+      this.stop();
+      setTimeout(() => {
+        this._destroyed = true;
+        this._cleanup();
+      }, 5000);
+    } else {
+      this._destroyed = true;
+      this._cleanup();
+    }
   }
 
   _cleanup() {
