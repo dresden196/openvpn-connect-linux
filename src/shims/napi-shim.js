@@ -844,51 +844,59 @@ class ClientWrapper {
   // -----------------------------------------------------------------------
 
   stop() {
+    if (this._stopping) return; // Prevent double-stop
+    this._stopping = true;
     console.log('[napi-shim] stop() called - disconnecting VPN');
     this._log('Stopping VPN connection...');
 
     const doCleanup = () => {
+      if (this._cleanedUp) return;
+      this._cleanedUp = true;
+      this._stopping = false;
       this._connected = false;
+      // Cancel pending kill timers
+      if (this._exitTimer) clearTimeout(this._exitTimer);
+      if (this._killTimer) clearTimeout(this._killTimer);
       this._emitEvent('DISCONNECTED', '');
       this._emitDone('DISCONNECTED', '', false);
       this._cleanup();
     };
+
+    // Listen for process exit to cancel fallback timers
+    if (this._process) {
+      this._process.once('exit', () => {
+        console.log('[napi-shim] openvpn exited after stop signal');
+        doCleanup();
+      });
+    }
 
     // Method 1: Management interface signal (preferred, graceful)
     if (this._mgmtSocket && !this._mgmtSocket.destroyed) {
       this._sendMgmt('signal SIGTERM');
     }
 
-    // Method 2: Management exit command after 1.5s
-    setTimeout(() => {
+    // Method 2: Management exit command after 1.5s (if still alive)
+    this._exitTimer = setTimeout(() => {
+      if (this._cleanedUp) return;
       if (this._mgmtSocket && !this._mgmtSocket.destroyed) {
         console.log('[napi-shim] Sending exit via management');
         this._sendMgmt('exit');
       }
     }, 1500);
 
-    // Method 3: Kill via pkexec after 3s (openvpn runs as root)
-    setTimeout(() => {
+    // Method 3: pkill after 4s - no pkexec prompt, just try pkill
+    this._killTimer = setTimeout(() => {
+      if (this._cleanedUp) return;
+      console.log('[napi-shim] Process still alive after 4s, using pkill');
       try {
-        // Kill any openvpn using our temp config files
         const { execSync } = require('child_process');
-        execSync('pkexec kill $(pgrep -f "openvpn --config /tmp/openvpn-connect-linux") 2>/dev/null', {
-          timeout: 5000,
+        execSync('pkill -f "openvpn --config /tmp/openvpn-connect-linux" 2>/dev/null', {
+          timeout: 3000,
           stdio: 'ignore',
         });
-        console.log('[napi-shim] Killed openvpn via pkexec');
-      } catch {
-        // Try without pkexec (might work if user has permissions)
-        try {
-          const { execSync } = require('child_process');
-          execSync('pkill -f "openvpn --config /tmp/openvpn-connect-linux" 2>/dev/null', {
-            timeout: 3000,
-            stdio: 'ignore',
-          });
-        } catch {}
-      }
+      } catch {}
       doCleanup();
-    }, 3000);
+    }, 4000);
   }
 
   pause(reason) {
