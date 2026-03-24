@@ -1145,6 +1145,50 @@ class ClientWrapper {
 // OS API - Linux implementations
 // ---------------------------------------------------------------------------
 const OS = {
+  // systemInfo is accessed as a property (array), not a function
+  // Expected: [manufacturer, model, uuid]
+  get systemInfo() {
+    let manufacturer = 'Unknown';
+    let model = 'Unknown';
+    let uuid = '';
+
+    // Get machine UUID
+    try {
+      uuid = fs.readFileSync('/etc/machine-id', 'utf8').trim();
+    } catch {
+      try {
+        uuid = fs.readFileSync('/var/lib/dbus/machine-id', 'utf8').trim();
+      } catch {
+        uuid = crypto.randomBytes(16).toString('hex');
+      }
+    }
+
+    // Get hardware info from DMI
+    try {
+      manufacturer = execSync('cat /sys/devices/virtual/dmi/id/sys_vendor 2>/dev/null', { encoding: 'utf8' }).trim() || 'Unknown';
+    } catch {}
+    try {
+      model = execSync('cat /sys/devices/virtual/dmi/id/product_name 2>/dev/null', { encoding: 'utf8' }).trim() || 'Unknown';
+    } catch {}
+
+    return [manufacturer, model, uuid.toUpperCase()];
+  },
+
+  // build is accessed as a property (array), not a function
+  // Expected: [buildNumber, distro]
+  get build() {
+    let buildNumber = os.release();
+    let distro = 'Linux';
+    try {
+      const release = fs.readFileSync('/etc/os-release', 'utf8');
+      const nameMatch = release.match(/^ID=(.+)/m);
+      const versionMatch = release.match(/^VERSION_ID="?([^"\n]+)"?/m);
+      if (nameMatch) distro = nameMatch[1];
+      if (versionMatch) buildNumber = versionMatch[1];
+    } catch {}
+    return [buildNumber, distro];
+  },
+
   version() {
     try {
       const release = fs.readFileSync('/etc/os-release', 'utf8');
@@ -1159,8 +1203,13 @@ const OS = {
     return `${os.type()} ${os.arch()}`;
   },
 
-  build() {
-    return os.release();
+  // adapter_state and service_state are the function names used by systeminformation
+  adapter_state(name) {
+    return OS.getAdapterState(name);
+  },
+
+  service_state(name) {
+    return OS.getServiceState(name);
   },
 
   getAdapterState(name) {
