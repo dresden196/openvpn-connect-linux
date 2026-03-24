@@ -1145,14 +1145,38 @@ class ClientWrapper {
 // OS API - Linux implementations
 // ---------------------------------------------------------------------------
 const OS = {
-  // systemInfo is accessed as a property (array), not a function
-  // Expected: [manufacturer, model, uuid]
-  get systemInfo() {
+  // version() is called as a function by os.js
+  // Returns an object with major/minor/patch parsed from kernel version
+  version() {
+    const rel = os.release();
+    const parts = rel.split('.');
+    return {
+      major: parseInt(parts[0]) || 0,
+      minor: parseInt(parts[1]) || 0,
+      patch: parseInt(parts[2]) || 0,
+      toString() { return rel; },
+    };
+  },
+
+  // system() is called as a function by os.js
+  // Also accessed as systemInfo property (array) by systeminformation/index.win.ts
+  // Returns a callable array: [manufacturer, model, uuid]
+  system() {
+    return OS._getSystemInfo();
+  },
+
+  // build() is called as a function by os.js
+  // Also accessed as property (array) by systeminformation/index.win.ts
+  // Returns a callable array: [buildNumber, distro]
+  build() {
+    return OS._getBuildInfo();
+  },
+
+  _getSystemInfo() {
     let manufacturer = 'Unknown';
     let model = 'Unknown';
     let uuid = '';
 
-    // Get machine UUID
     try {
       uuid = fs.readFileSync('/etc/machine-id', 'utf8').trim();
     } catch {
@@ -1163,7 +1187,6 @@ const OS = {
       }
     }
 
-    // Get hardware info from DMI
     try {
       manufacturer = execSync('cat /sys/devices/virtual/dmi/id/sys_vendor 2>/dev/null', { encoding: 'utf8' }).trim() || 'Unknown';
     } catch {}
@@ -1174,9 +1197,7 @@ const OS = {
     return [manufacturer, model, uuid.toUpperCase()];
   },
 
-  // build is accessed as a property (array), not a function
-  // Expected: [buildNumber, distro]
-  get build() {
+  _getBuildInfo() {
     let buildNumber = os.release();
     let distro = 'Linux';
     try {
@@ -1187,20 +1208,6 @@ const OS = {
       if (versionMatch) buildNumber = versionMatch[1];
     } catch {}
     return [buildNumber, distro];
-  },
-
-  version() {
-    try {
-      const release = fs.readFileSync('/etc/os-release', 'utf8');
-      const match = release.match(/PRETTY_NAME="(.+)"/);
-      return match ? match[1] : os.release();
-    } catch {
-      return os.release();
-    }
-  },
-
-  system() {
-    return `${os.type()} ${os.arch()}`;
   },
 
   // adapter_state and service_state are the function names used by systeminformation
