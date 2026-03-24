@@ -30,10 +30,33 @@ chmod +x openvpn-connect-linux-*-x86_64.AppImage
 ./openvpn-connect-linux-*-x86_64.AppImage
 ```
 
+### Arch Linux (AUR)
+
+```bash
+yay -S openvpn-connect-linux
+```
+
+### Fedora / RHEL / CentOS / openSUSE (RPM)
+
+Download the `.rpm` from [Releases](https://github.com/dresden196/openvpn-connect-linux/releases).
+
+```bash
+sudo dnf install openvpn-connect-linux-3.8.0-1.x86_64.rpm
+```
+
+### Ubuntu / Debian / Mint (deb)
+
+Download the `.deb` from [Releases](https://github.com/dresden196/openvpn-connect-linux/releases).
+
+```bash
+sudo dpkg -i openvpn-connect-linux-3.8.0-amd64.deb
+sudo apt-get install -f  # install dependencies
+```
+
 ### Requirements
 
 - Linux x86_64
-- `openvpn` 2.5+ installed (`sudo pacman -S openvpn` / `sudo apt install openvpn`)
+- `openvpn` 2.5+ installed (`sudo pacman -S openvpn` / `sudo dnf install openvpn` / `sudo apt install openvpn`)
 - `polkit` for privilege escalation (included in most desktop environments)
 - `libsecret` for credential storage (included with KDE/GNOME)
 
@@ -80,10 +103,14 @@ sudo apt install nodejs npm openvpn libsecret-1-dev libsecret-1-0
 git clone https://github.com/dresden196/openvpn-connect-linux.git
 cd openvpn-connect-linux
 npm install
-npm run build:appimage
+npm run build:appimage    # AppImage (universal)
+npm run build:rpm         # RPM (Fedora/RHEL/openSUSE)
+npm run build:deb         # deb (Ubuntu/Debian/Mint)
 ```
 
-The AppImage will be in `dist/`.
+Packages will be in `dist/`.
+
+RPM build requires `rpmbuild` (`sudo dnf install rpm-build` / `sudo pacman -S rpm-tools`).
 
 ### Development
 
