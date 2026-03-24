@@ -363,24 +363,48 @@ class ClientWrapper {
     const originalContent = configWrap.content || '';
 
     // Extract remote info for the return value
+    // Match: remote <host> [port] [proto]
+    // Also handle: remote <host> (no port/proto) with separate proto line
     let remoteHost = '', remotePort = '', remoteProto = '';
-    const remoteMatch = originalContent.match(/^remote\s+(\S+)(?:\s+(\d+))?(?:\s+(\S+))?/m);
-    if (remoteMatch) {
-      remoteHost = remoteMatch[1] || '';
-      remotePort = remoteMatch[2] || '1194';
-      remoteProto = remoteMatch[3] || '';
+    const remoteLines = originalContent.match(/^remote\s+\S+.*$/gm) || [];
+    // Filter out remote-cert-tls, remote-random, etc.
+    const actualRemotes = remoteLines.filter(l => !l.match(/^remote-/));
+
+    if (actualRemotes.length > 0) {
+      const parts = actualRemotes[0].trim().split(/\s+/);
+      // parts[0] = 'remote', parts[1] = host, parts[2] = port, parts[3] = proto
+      remoteHost = parts[1] || '';
+      remotePort = parts[2] || '';
+      remoteProto = parts[3] || '';
     }
+
+    // If no proto from remote line, check standalone proto directive
+    if (!remoteProto) {
+      const protoMatch = originalContent.match(/^proto\s+(\S+)/m);
+      if (protoMatch) remoteProto = protoMatch[1];
+    }
+
+    // Default port if not specified
+    if (!remotePort) remotePort = '1194';
+
+    // Default proto if not specified
+    if (!remoteProto) remoteProto = 'udp';
+
+    console.log(`[napi-shim] Parsed config: host=${remoteHost} port=${remotePort} proto=${remoteProto} remotes=${actualRemotes.length}`);
 
     const hasAuthUser = originalContent.includes('auth-user-pass');
     const serverList = [];
-    const srvRegex = /^remote\s+(\S+)(?:\s+(\d+))?(?:\s+(\S+))?/gm;
-    let srvMatch;
-    while ((srvMatch = srvRegex.exec(originalContent)) !== null) {
-      serverList.push(JSON.stringify({
-        server: srvMatch[1],
-        port: srvMatch[2] || '1194',
-        proto: srvMatch[3] || '',
-      }));
+    const seen = new Set();
+    for (const line of actualRemotes) {
+      const parts = line.trim().split(/\s+/);
+      const server = parts[1] || '';
+      const port = parts[2] || remotePort;
+      const proto = parts[3] || remoteProto;
+      const key = `${server}:${port}:${proto}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        serverList.push(JSON.stringify({ server, port, proto }));
+      }
     }
 
     return {
