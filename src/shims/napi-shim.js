@@ -534,10 +534,14 @@ class ClientWrapper {
     this._process.on('exit', (code, signal) => {
       console.log(`[openvpn] Process exited: code=${code} signal=${signal}`);
       this._log(`OpenVPN process exited: code=${code} signal=${signal}`);
-      this._connected = false;
-      this._emitEvent('DISCONNECTED', `Process exited (code ${code})`);
-      this._emitDone('DISCONNECTED', code === 0 ? '' : `Exit code ${code}`, code !== 0);
-      this._cleanup();
+      // If stop() is in progress, let its doCleanup handle the events.
+      // Otherwise this is an unexpected exit (crash, timeout, etc.)
+      if (!this._stopping) {
+        this._connected = false;
+        this._emitEvent('DISCONNECTED', `Process exited (code ${code})`);
+        this._emitDone('DISCONNECTED', code === 0 ? '' : `Exit code ${code}`, code !== 0);
+        this._cleanup();
+      }
     });
 
     // Connect to management interface after openvpn starts
