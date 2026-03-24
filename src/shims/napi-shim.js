@@ -433,19 +433,6 @@ class ClientWrapper {
 
   async _connectAsync() {
     try {
-      // Save current DNS before VPN overwrites it
-      // This allows us to append local DNS as fallback
-      try {
-        this._originalDns = fs.readFileSync('/etc/resolv.conf', 'utf8');
-        this._localNameservers = this._originalDns
-          .split('\n')
-          .filter(l => l.trim().startsWith('nameserver'))
-          .map(l => l.trim());
-        console.log(`[napi-shim] Saved ${this._localNameservers.length} local DNS servers`);
-      } catch {
-        this._localNameservers = [];
-      }
-
       // Get a free port for management interface
       this._mgmtPort = await getFreeMgmtPort();
       this._mgmtPassword = crypto.randomBytes(16).toString('hex');
@@ -711,37 +698,7 @@ class ClientWrapper {
           state: 'CONNECTED',
         };
 
-        // After VPN connects, append local DNS as fallback
-        // so non-corporate domains still resolve
-        if (this._localNameservers && this._localNameservers.length > 0) {
-          setTimeout(() => {
-            try {
-              const currentDns = fs.readFileSync('/etc/resolv.conf', 'utf8');
-              // Only append if local DNS isn't already there
-              const missing = this._localNameservers.filter(ns => !currentDns.includes(ns));
-              if (missing.length > 0) {
-                const appended = currentDns.trimEnd() + '\n# Local DNS fallback (added by OpenVPN Connect Linux)\n' + missing.join('\n') + '\n';
-                try {
-                  fs.writeFileSync('/etc/resolv.conf', appended);
-                  console.log(`[napi-shim] Appended ${missing.length} local DNS servers as fallback`);
-                } catch {
-                  // Can't write directly (permission denied), try via pkexec
-                  const tmpDns = path.join(os.tmpdir(), 'resolv.conf.tmp');
-                  fs.writeFileSync(tmpDns, appended);
-                  try {
-                    execSync(`pkexec bash -c 'cat "${tmpDns}" > /etc/resolv.conf'`, { timeout: 10000, stdio: 'ignore' });
-                    console.log(`[napi-shim] Appended local DNS via pkexec`);
-                  } catch (err) {
-                    console.log(`[napi-shim] Could not append local DNS: ${err.message}`);
-                  }
-                  try { fs.unlinkSync(tmpDns); } catch {}
-                }
-              }
-            } catch (err) {
-              console.log(`[napi-shim] DNS fallback error: ${err.message}`);
-            }
-          }, 2000); // Wait for openvpn to finish setting DNS
-        }
+        console.log('[napi-shim] VPN connected');
       }
 
       this._emitEvent(state, desc);
