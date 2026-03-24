@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build output
+dist/
+
+# Source maps (large, not needed in distribution)
+resources/app/*.map
+
+# User data / profiles (NEVER commit these)
+*.ovpn
+*.conf
+*.pw
+profiles/
+.credentials*
+settings.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Electron
+*.asar
+
+# Windows binaries (extracted from MSI, not needed in repo)
+resources/app/*.node
+resources/app/Shortcut.exe
+
+# Runtime
+/tmp/

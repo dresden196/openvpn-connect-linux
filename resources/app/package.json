@@ -1,0 +1,14 @@
+{
+    "name": "OpenVPNConnect",
+    "productName": "OpenVPN Connect",
+    "version": "3.8.0-4528",
+    "description": "",
+    "main": "app.js",
+    "build": {},
+    "author": "OpenVPN",
+    "package": "3.8.0",
+    "number": "4528",
+    "scripts": {
+        "setver": "npm version \"$OC_APP_VERSION-$BUILD_NUMBER\""
+    }
+}

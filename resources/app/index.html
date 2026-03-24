@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="preload" href="icomoon.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+    <link rel="preload" href="inter_bold.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+    <link rel="preload" href="inter_medium.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+    <link rel="preload" href="inter_semibold.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+    <link rel="preload" href="Roboto-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+    <link rel="preload" href="inter.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+    <link rel="preload" href="courier_prime.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+
+    <style>
+        @font-face {
+            font-family: icomoon;
+            src: url('icomoon.ttf');
+        }
+
+        @font-face {
+            font-family: inter_bold;
+            src: url('inter_bold.ttf');
+        }
+
+
+        @font-face {
+            font-family: inter_medium;
+            src: url('inter_medium.ttf');
+        }
+
+        @font-face {
+            font-family: inter_semibold;
+            src: url('inter_semibold.ttf');
+        }
+
+        @font-face {
+            font-family: Roboto;
+            src: url('Roboto-Regular.ttf');
+        }
+
+        @font-face {
+            font-family: inter;
+            src: url('inter.ttf');
+        }
+
+        @font-face {
+            font-family: courier_prime;
+            src: url('courier_prime.ttf');
+        }
+    </style>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div id="splash-screen">
+        <div class="splash-screen__img">
+            <img class="logo-light" src="logo_splash.png" alt="logo-light">
+            <img class="logo-dark" src="logo_splash_dark.png" alt="logo-dark">
+        </div>
+    </div>
+    <div id="root"></div>
+    <script type="text/javascript" src="bundle.web.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        document.addEventListener('dragover',function(event){
+            event.preventDefault();
+            return false;
+        },false);
+
+        document.addEventListener('drop',function(event){
+            event.preventDefault();
+            return false;
+        },false);
+    </script>
+</body>
+</body>
+
+</html>

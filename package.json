@@ -1,0 +1,91 @@
+{
+  "name": "openvpn-connect-linux",
+  "productName": "OpenVPN Connect",
+  "version": "3.8.0",
+  "description": "OpenVPN Connect client for Linux - community port of the official Windows/macOS Electron app",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron . --no-sandbox",
+    "start:debug": "electron . --no-sandbox --enable-logging --inspect=5858",
+    "rebuild-native": "npx @electron/rebuild -f -w keytar,pkcs11js",
+    "clean": "rm -rf dist/",
+    "prebuild": "rm -f resources/app/*.map",
+    "build": "electron-builder --linux",
+    "build:appimage": "electron-builder --linux AppImage",
+    "build:deb": "electron-builder --linux deb",
+    "build:rpm": "electron-builder --linux rpm",
+    "build:pacman": "electron-builder --linux pacman",
+    "postinstall": "echo 'Run npm run rebuild-native to rebuild native modules for Electron'"
+  },
+  "build": {
+    "appId": "net.openvpn.connect.linux",
+    "productName": "OpenVPN Connect",
+    "artifactName": "openvpn-connect-linux-${version}-${arch}.${ext}",
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ],
+      "category": "Network",
+      "icon": "assets/icons",
+      "synopsis": "OpenVPN Connect VPN Client for Linux",
+      "description": "Community port of OpenVPN Connect with full SAML/SSO support. Provides the same GUI experience as the official Windows/macOS client.",
+      "desktop": {
+        "Name": "OpenVPN Connect",
+        "Comment": "OpenVPN Connect VPN Client",
+        "Categories": "Network;VPN;",
+        "Keywords": "vpn;openvpn;network;security;saml;sso;",
+        "StartupWMClass": "openvpn-connect-linux",
+        "MimeType": "application/x-openvpn-profile;"
+      }
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "resources/**/*",
+      "assets/**/*",
+      "node_modules/**/*",
+      "!resources/app/*.map",
+      "!**/*.ovpn",
+      "!**/*.pw",
+      "!**/profiles/**",
+      "!**/.credentials*"
+    ],
+    "asarUnpack": [
+      "**/*.node",
+      "**/resources/app/**"
+    ],
+    "publish": null
+  },
+  "keywords": [
+    "openvpn",
+    "vpn",
+    "linux",
+    "electron",
+    "network",
+    "saml",
+    "sso"
+  ],
+  "author": "OpenVPN Connect Linux Community Port",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0"
+  },
+  "optionalDependencies": {
+    "keytar": "^7.9.0",
+    "pkcs11js": "^2.1.6"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
+    "electron": "^37.3.1",
+    "electron-builder": "^25.1.8"
+  }
+}

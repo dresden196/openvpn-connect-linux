@@ -1,0 +1,123 @@
+* {
+    forced-color-adjust: none;
+}
+
+html {
+    overflow: hidden;
+}
+
+#root {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    image-rendering: -webkit-optimize-contrast;
+}
+
+#splash-screen {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: white;
+    z-index: 1;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    transition: opacity 0.5s, visibility 0.5s;
+    opacity: 1;
+}
+
+#splash-screen.hide {
+    opacity: 0;
+    transition: opacity 0.5s, visibility 0.5s;
+}
+
+#splash-screen .splash-screen__img {
+    width: 60vw;
+    max-width: 300px;
+}
+
+#splash-screen img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+@media (prefers-color-scheme: light) {
+    #splash-screen {
+        background: white;
+    }
+
+    #splash-screen .logo-dark {
+        display: none;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    #splash-screen {
+        background-color: #111322;
+    }
+
+    #splash-screen .logo-light {
+        display: none;
+    }
+}
+
+*[dir="auto"], label {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.root-border {
+    box-sizing: border-box;
+    border-bottom: 1.5px solid #a7a7a7;
+    border-right: 1.5px solid #a7a7a7;
+    border-left: 0.5px solid #a7a7a7;
+    border-top: 0.5px solid #a7a7a7;
+}
+
+.windowsNoDraggable {
+    -webkit-app-region: no-drag
+}
+
+
+::-webkit-scrollbar {
+    width: 12px;
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #CCC;
+    background-clip: padding-box;
+    border: 0.05em solid transparent;
+    border-bottom-width: 4px;
+    border-top-width: 4px;
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+/* Buttons */
+::-webkit-scrollbar-button:single-button {
+    display: none;
+    height: 0;
+    width: 0;
+}
+
+input,
+button,
+textarea,
+:focus {
+    outline: none;
+}
