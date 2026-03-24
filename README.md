@@ -77,7 +77,7 @@ sudo apt-get install -f  # install dependencies
 | Auto-Start | Windows Registry / macOS Login Items | XDG autostart `.desktop` file |
 | System Tray | Native | Native (AppIndicator/StatusNotifierItem) |
 | DCO (Data Channel Offload) | Windows kernel driver | Linux `ovpn-dco` kernel module (if available) |
-| PKCS#11 Smart Cards | Full support | Stub (planned) |
+| PKCS#11 Smart Cards | Full support | Native via `pkcs11js` + system `.so` modules (e.g. `opensc-pkcs11.so`) |
 
 ### Known Limitations
 
