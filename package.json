@@ -1,6 +1,6 @@
 {
   "name": "openvpn-connect-linux",
-  "productName": "OpenVPN Connect",
+  "productName": "OpenVPN-Connect",
   "version": "3.8.0",
   "description": "OpenVPN Connect client for Linux - community port of the official Windows/macOS Electron app",
   "main": "src/main.js",
@@ -13,21 +13,30 @@
     "build": "electron-builder --linux",
     "build:appimage": "electron-builder --linux AppImage",
     "build:deb": "electron-builder --linux deb",
-    "build:rpm": "electron-builder --linux rpm",
+    "build:rpm": "bash scripts/build-rpm.sh",
     "build:pacman": "electron-builder --linux pacman",
     "postinstall": "echo 'Run npm run rebuild-native to rebuild native modules for Electron'"
   },
   "build": {
     "appId": "net.openvpn.connect.linux",
-    "productName": "OpenVPN Connect",
+    "productName": "OpenVPN-Connect",
     "artifactName": "openvpn-connect-linux-${version}-${arch}.${ext}",
     "linux": {
       "target": [
         {
           "target": "AppImage",
           "arch": ["x64"]
+        },
+        {
+          "target": "rpm",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
         }
       ],
+      "executableName": "openvpn-connect",
       "category": "Network",
       "icon": "assets/icons",
       "synopsis": "OpenVPN Connect VPN Client for Linux",
@@ -41,8 +50,17 @@
         "MimeType": "application/x-openvpn-profile;"
       }
     },
+    "rpm": {
+      "depends": ["openvpn", "libsecret", "polkit"],
+      "packageName": "openvpn-connect-linux"
+    },
+    "deb": {
+      "depends": ["openvpn", "libsecret-1-0", "policykit-1"],
+      "priority": "optional"
+    },
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "app": "."
     },
     "files": [
       "src/**/*",
@@ -70,11 +88,15 @@
     "saml",
     "sso"
   ],
-  "author": "OpenVPN Connect Linux Community Port",
+  "author": {
+    "name": "OpenVPN Connect Linux Community Port",
+    "email": "dwildey@hivelocity.net"
+  },
+  "homepage": "https://github.com/dresden196/openvpn-connect-linux",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/dresden196/openvpn-connect-linux.git"
   },
   "dependencies": {
     "electron-store": "^8.2.0"
