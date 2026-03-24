@@ -802,46 +802,48 @@ class ClientWrapper {
     console.log('[napi-shim] stop() called - disconnecting VPN');
     this._log('Stopping VPN connection...');
 
-    // Send SIGTERM via management interface - this is the proper way to
-    // stop openvpn gracefully. The process runs as root (via pkexec) so
-    // we can't kill it directly from userspace.
-    if (this._mgmtSocket && !this._mgmtSocket.destroyed) {
-      this._sendMgmt('signal SIGTERM');
-
-      // If management signal doesn't work, try exit command
-      setTimeout(() => {
-        if (this._process && !this._process.killed) {
-          console.log('[napi-shim] Process still alive, sending exit command');
-          if (this._mgmtSocket && !this._mgmtSocket.destroyed) {
-            this._sendMgmt('exit');
-          }
-        }
-      }, 2000);
-
-      // Last resort: use pkexec to kill the root process
-      setTimeout(() => {
-        if (this._process && !this._process.killed) {
-          console.log('[napi-shim] Process still alive, using pkexec kill');
-          try {
-            const { execSync } = require('child_process');
-            execSync(`pkill -TERM -f "openvpn --config.*${path.basename(this._configFilePath || '')}"`, { timeout: 5000 });
-          } catch {}
-          this._emitEvent('DISCONNECTED', '');
-          this._emitDone('DISCONNECTED', '', false);
-          this._cleanup();
-        }
-      }, 4000);
-    } else {
-      // No management socket - try direct kill
-      console.log('[napi-shim] No management socket, attempting direct cleanup');
-      try {
-        const { execSync } = require('child_process');
-        execSync('pkill -TERM -f "openvpn --config /tmp/openvpn-connect-linux"', { timeout: 5000 });
-      } catch {}
+    const doCleanup = () => {
+      this._connected = false;
       this._emitEvent('DISCONNECTED', '');
       this._emitDone('DISCONNECTED', '', false);
       this._cleanup();
+    };
+
+    // Method 1: Management interface signal (preferred, graceful)
+    if (this._mgmtSocket && !this._mgmtSocket.destroyed) {
+      this._sendMgmt('signal SIGTERM');
     }
+
+    // Method 2: Management exit command after 1.5s
+    setTimeout(() => {
+      if (this._mgmtSocket && !this._mgmtSocket.destroyed) {
+        console.log('[napi-shim] Sending exit via management');
+        this._sendMgmt('exit');
+      }
+    }, 1500);
+
+    // Method 3: Kill via pkexec after 3s (openvpn runs as root)
+    setTimeout(() => {
+      try {
+        // Kill any openvpn using our temp config files
+        const { execSync } = require('child_process');
+        execSync('pkexec kill $(pgrep -f "openvpn --config /tmp/openvpn-connect-linux") 2>/dev/null', {
+          timeout: 5000,
+          stdio: 'ignore',
+        });
+        console.log('[napi-shim] Killed openvpn via pkexec');
+      } catch {
+        // Try without pkexec (might work if user has permissions)
+        try {
+          const { execSync } = require('child_process');
+          execSync('pkill -f "openvpn --config /tmp/openvpn-connect-linux" 2>/dev/null', {
+            timeout: 3000,
+            stdio: 'ignore',
+          });
+        } catch {}
+      }
+      doCleanup();
+    }, 3000);
   }
 
   pause(reason) {
