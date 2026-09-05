@@ -1,7 +1,7 @@
 {
   "name": "openvpn-connect-linux",
   "productName": "OpenVPN-Connect",
-  "version": "3.8.0",
+  "version": "3.8.2",
   "description": "OpenVPN Connect client for Linux - community port of the official Windows/macOS Electron app",
   "main": "src/main.js",
   "scripts": {
