@@ -185,6 +185,7 @@ class ClientWrapper {
     this._process = null;
     this._mgmtSocket = null;
     this._mgmtPort = 0;
+    this._mgmtStarted = false;
     this._mgmtPassword = '';
     this._state = VPN_STATES.DISCONNECTED;
     this._connectionInfo = {};
@@ -518,6 +519,7 @@ class ClientWrapper {
 
     this._log(`Starting: ${bin} ${spawnArgs.join(' ').substring(0, 200)}...`);
 
+    this._mgmtStarted = false;
     this._process = spawn(bin, spawnArgs, {
       stdio: ['pipe', 'pipe', 'pipe'],
       detached: false,
@@ -529,6 +531,12 @@ class ClientWrapper {
         if (line.trim()) {
           console.log(`[openvpn stdout] ${line.trim()}`);
           this._log(line.trim());
+          // openvpn announces the management socket as soon as it is listening.
+          // Connect on that signal rather than racing a blind timer, which loses
+          // whenever the pkexec prompt is slow to be answered.
+          if (line.includes('MANAGEMENT: TCP Socket listening')) {
+            this._startMgmt(30);
+          }
         }
       }
     });
@@ -570,12 +578,21 @@ class ClientWrapper {
 
     // Connect to management interface after openvpn starts
     // Use longer delay because pkexec auth prompt can take time
-    setTimeout(() => this._connectManagement(30), 1000);
+    setTimeout(() => this._startMgmt(300), 1000);
   }
 
   // -----------------------------------------------------------------------
   // Management Interface
   // -----------------------------------------------------------------------
+
+  // Idempotent entry point for the management connection. Whichever
+  // trigger fires first -- openvpn's readiness line or the fallback
+  // timer -- wins; the other becomes a no-op.
+  _startMgmt(retries) {
+    if (this._mgmtStarted || this._destroyed || !this._process) return;
+    this._mgmtStarted = true;
+    this._connectManagement(retries);
+  }
 
   _connectManagement(retries = 10) {
     if (this._destroyed || !this._process) return;
