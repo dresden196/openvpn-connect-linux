@@ -96,7 +96,11 @@ const reactBridgeMethodNames: string[] = [
     'addProxy',
     'editProxy',
     'removeProxy',
-    'resolvePath'
+    'resolvePath',
+    'enableAutoStart',
+    'disableAutoStart',
+    'closeApp',
+    'hideDockIcon'
 ];
 
 const fsMethodNames: string[] = [

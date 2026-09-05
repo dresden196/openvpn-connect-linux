@@ -23,7 +23,7 @@ Thumbs.db
 # Electron
 *.asar
 
-# Windows binaries (extracted from MSI, not needed in repo)
+# Upstream native binaries (extracted from the DMG/MSI, replaced by src/shims)
 resources/app/*.node
 resources/app/Shortcut.exe
 

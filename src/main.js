@@ -249,6 +249,25 @@ app.setLoginItemSettings = function(settings) {
   }
 };
 
+// app.dock exists only on macOS. Upstream's hideDockIcon() calls app.dock.hide()
+// guarded solely by the hideDockIcon *setting value*, not by a platform check, so
+// it is reachable on Linux -- "Minimize on launch" with that setting truthy would
+// otherwise throw TypeError: Cannot read properties of undefined (reading 'hide')
+// in the main process. Provide an inert dock so those calls are no-ops.
+if (!app.dock) {
+  app.dock = {
+    hide() {},
+    show() { return Promise.resolve(); },
+    isVisible() { return false; },
+    setIcon() {},
+    setBadge() {},
+    getBadge() { return ''; },
+    bounce() { return -1; },
+    cancelBounce() {},
+    setMenu() {},
+  };
+}
+
 const originalGetLoginItemSettings = app.getLoginItemSettings.bind(app);
 app.getLoginItemSettings = function() {
   const enabled = linuxFs.existsSync(autostartFile);
