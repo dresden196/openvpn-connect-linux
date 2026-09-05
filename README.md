@@ -124,26 +124,46 @@ npm run start:debug    # Run with DevTools inspector
 
 When OpenVPN Inc. releases a new version of OpenVPN Connect:
 
-1. Download the new Windows MSI or macOS DMG
+1. Download the new macOS DMG. (The Windows MSI also works, but see
+   [Release Schedule](#release-schedule) for why macOS is preferred.)
 2. Extract the `app.asar` file:
    ```bash
+   # From DMG (preferred)
+   7z x openvpn-connect-*.dmg
+   7z x "OpenVPN Connect/OpenVPN_Connect_*_x86_64_Installer_signed.pkg" -opkg
+   cd pkg/tmp-app.pkg && cat Payload | gzip -dc | cpio -idm
+   npx @electron/asar extract Contents/Resources/app.asar resources/app
+
    # From MSI
    msiextract openvpn-connect-*.msi
    npx @electron/asar extract "OpenVPN Connect/resources/app.asar" resources/app
-
-   # From DMG
-   7z x openvpn-connect-*.dmg
-   # Extract pkg, then payload, then find app.asar inside the .app bundle
    ```
-3. Remove source maps: `rm -f resources/app/*.map`
-4. Test: `npm start`
-5. Build: `npm run build:appimage`
+3. Keep the source maps somewhere outside the tree for reference, then drop them
+   from the shipped app (they add roughly 16 MB):
+   ```bash
+   cp resources/app/*.map ~/openvpn-connect-maps/   # not committed
+   rm -f resources/app/*.map
+   ```
+4. Diff `resources/app/preload.ts` against the previous release. Every new entry
+   in `reactBridgeMethodNames` is an API the renderer can call, and the shim must
+   implement or deliberately stub it.
+5. Test: `npm start`
+6. Build: `npm run build:appimage`
 
 The shim layer (`src/`) is version-independent in most cases. If OpenVPN Inc. changes the internal API surface of `napi.node`, the shim may need updates.
 
 ## Release Schedule
 
-Releases follow the official OpenVPN Connect release cycle with a short delay for testing. Typically 2–4 weeks after a new official release, following the macOS version (which tends to be newer than the Windows version).
+Releases follow the official OpenVPN Connect release cycle with a short delay for testing, typically 2–4 weeks after a new official release.
+
+**The port tracks the macOS builds.** The Windows and macOS streams have diverged: they no longer share version numbers or release dates, and neither is reliably ahead. Windows went 3.8.0 (Sep 2025) straight to 3.9.0 (Jun 2026), while macOS went 3.8.0 → 3.8.1 → 3.8.2 (May 2026). macOS is the better base for two reasons:
+
+- **Less unusable surface.** Recent Windows releases add features that cannot work on Linux. 3.9.0's Pre-Login Connect (SBL) introduces nine `vpnSystemService_*` IPC methods tied to the Windows sign-in screen; tracking macOS keeps them out of the shim layer.
+- **Source maps.** macOS builds ship `app.js.map` and `bundle.web.js.map` with full `sourcesContent` — the original TypeScript. Windows builds ship none. Reading upstream's real source makes tracking internal API changes between releases dramatically easier than diffing minified bundles.
+
+Tracking macOS does not mean missing platform-neutral fixes. The same `app.asar` is shipped on both platforms — it carries Windows `.ico` assets and `Shortcut.exe` even in the macOS build — and branches on `Platform.OS` at runtime.
+
+Current base: **3.8.2 (6009)**, taken from the macOS DMG.
 
 ## Project Structure
 
