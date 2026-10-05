@@ -82,11 +82,18 @@ process.dlopen = function (module, filename, flags) {
 
 const originalResolveFilename = Module._resolveFilename;
 Module._resolveFilename = function (request, parent, isMain, options) {
-  // Redirect electron require to our shim that patches BrowserWindow
-  // Only redirect when called from the app bundle (not from our own code)
+  // Redirect electron require to our shim that patches BrowserWindow, but only
+  // for the bundled app -- never for our own files, or the shim's own
+  // require('electron') resolves back to the shim and the circular require
+  // hands out an empty exports object.
+  //
+  // This has to be a path-prefix test, not a substring test. Inside an AppImage
+  // everything lives under resources/app.asar, and the string "resources/app"
+  // is a prefix of "resources/app.asar" -- so a substring check matches this
+  // very file and redirects our own main.js into the shim.
   if (request === 'electron' && parent && parent.filename &&
-      parent.filename.includes('resources/app')) {
-    return path.join(__dirname, 'shims', 'electron-shim.js');
+      (parent.filename === APP_DIR || parent.filename.startsWith(APP_DIR + path.sep))) {
+    return path.join(SHIMS_DIR, 'electron-shim.js');
   }
 
   // Intercept the napi.node require from core/napi.js
@@ -439,8 +446,17 @@ process.on('SIGTERM', () => { killOpenvpn(); process.exit(0); });
 app.on('will-quit', killOpenvpn);
 
 // Set the working directory to the app dir so __dirname resolves correctly
-// for the webpack bundle's asset references
-process.chdir(APP_DIR);
+// for the webpack bundle's asset references.
+//
+// In an AppImage (or any asar-packed build) APP_DIR lives inside app.asar,
+// which is an archive rather than a real directory, so chdir fails with
+// ENOTDIR and takes the main process down. asar paths are served by Electron's
+// fs shim regardless of cwd, so skipping the chdir there is safe.
+try {
+  process.chdir(APP_DIR);
+} catch (err) {
+  console.log(`[Linux] Keeping cwd ${process.cwd()} (cannot chdir to ${APP_DIR}: ${err.code})`);
+}
 
 // Intercept app.quit to prevent premature quit from timeout
 const originalQuit = app.quit.bind(app);
