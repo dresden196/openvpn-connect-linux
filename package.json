@@ -42,12 +42,14 @@
       "synopsis": "OpenVPN Connect VPN Client for Linux",
       "description": "Community port of OpenVPN Connect with full SAML/SSO support. Provides the same GUI experience as the official Windows/macOS client.",
       "desktop": {
-        "Name": "OpenVPN Connect",
-        "Comment": "OpenVPN Connect VPN Client",
-        "Categories": "Network;VPN;",
-        "Keywords": "vpn;openvpn;network;security;saml;sso;",
-        "StartupWMClass": "openvpn-connect-linux",
-        "MimeType": "application/x-openvpn-profile;"
+        "entry": {
+          "Name": "OpenVPN Connect",
+          "Comment": "OpenVPN Connect VPN Client",
+          "Categories": "Network;VPN;",
+          "Keywords": "vpn;openvpn;network;security;saml;sso;",
+          "StartupWMClass": "openvpn-connect-linux",
+          "MimeType": "application/x-openvpn-profile;"
+        }
       }
     },
     "rpm": {
@@ -107,8 +109,8 @@
   },
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",
-    "electron": "^37.3.1",
-    "electron-builder": "^25.1.8"
+    "electron": "^44.0.0",
+    "electron-builder": "^26.17.0"
   },
   "allowScripts": {
     "keytar": true,
